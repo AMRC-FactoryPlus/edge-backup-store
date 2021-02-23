@@ -1,0 +1,43 @@
+version: '3.7'
+services:
+  catalog:
+    image: fametec/bacula-catalog:9.6.5
+    deploy:
+      placement:
+        constraints:
+          - node.hostname == amrc-factoryP-2
+    environment:
+      POSTGRES_PASSWORD: bacula
+      POSTGRES_USER: bacula
+      POSTGRES_DB: bacula
+    volumes:
+      - catalog_data:/var/lib/postgresql/data:rw
+    networks:
+      - factory-plus
+  storage:
+    hostname: 'bacula-storage'
+    image: fametec/bacula-storage:9.6.5
+    volumes:
+      - /backups:/backups
+    deploy:
+      placement:
+        constraints:
+          - node.hostname == amrc-factoryP-2
+    depends_on:
+      - director
+      - catalog
+    configs:
+      - source: storage_config
+        target: /opt/bacula/etc/bacula-sd.conf
+    networks:
+      - factory-plus
+
+networks:
+  factory-plus:
+    external: true
+    name: factory-plus
+volumes: 
+  catalog_data:
+configs:
+   storage_config:
+    file: ./etc/bacula-sd.conf
